@@ -1,0 +1,43 @@
+---
+driver:
+    name: docker
+
+provisioner:
+  name: ansible_playbook
+  roles_path: roles
+  hosts: tomcat-servers
+  require_ansible_repo: true
+  ansible_verbose: true
+  ansible_version: 2.7
+  extra_vars:
+    a: b
+
+verifier:
+  name: inspec
+  sudo_path: true
+
+platforms:
+  - name: centos-7.2
+    driver_plugin: docker
+    driver_config:
+      image: ansible/centos7-ansible:stable
+      platform: centos
+      #box_url: http://puppet-vagrant-boxes.puppetlabs.com/centos-65-x64-virtualbox-nocm.box
+      network:
+      - ['forwarded_port', {guest: 8080, host: 8080}]
+      #- [ 'private_network', { ip: '192.168.33.11' } ]
+
+suites:
+  - name: ansible
+    driver_config:
+      hostname: '192.168.1.69'
+    verifier:
+      patterns:
+      - roles/tomcat/spec/tomcat_spec.rb
+      bundler_path: '/usr/local/bin'
+      rspec_path: '/usr/local/bin'
+      env_vars:
+        TARGET_HOST: 192.168.1.69
+        LOGIN_USER: centos
+        SUDO: true
+        SSH_KEY: spec/test.pem

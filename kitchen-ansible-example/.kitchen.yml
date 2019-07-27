@@ -1,0 +1,42 @@
+---
+driver:
+    name: vagrant
+
+provisioner:
+  name: ansible_playbook
+  roles_path: roles
+  hosts: tomcat-servers
+  require_ansible_repo: true
+  ansible_connection: local
+  ansible_verbose: true
+  ansible_version: latest
+  extra_vars:
+    a: b
+
+verifier:
+  name: inspec
+  sudo_path: true
+
+platforms:
+  - name: centos/7
+    driver_plugin: vagrant
+    driver_config:
+      box: centos/7
+      box_url: https://app.vagrantup.com/centos/boxes/7
+      network:
+      - ['forwarded_port', {guest: 8080, host: 8080}]
+      - ['private_network', { ip: '192.168.1.16' }]
+
+suites:
+  - name: ansible
+    driver_config:
+      hostname: '192.168.1.16'
+    verifier:
+      patterns:
+      - roles/tomcat/spec/tomcat_spec.rb
+      bundler_path: '/usr/local/bin'
+      rspec_path: '/usr/local/bin'
+      env_vars:
+        TARGET_HOST: 127.0.0.1
+        LOGIN_USER: vagrant
+        SUDO: true
